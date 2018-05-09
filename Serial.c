@@ -4,17 +4,20 @@
 #fuses HS, NOFCMEN, NOIESO, XT, PUT, NOBROWNOUT, NOWDT
 #fuses NOPBADEN, STVREN, NOLVP, NODEBUG,
 #use delay(clock=16000000)
-#use RS232(stream=uart, baud=9600, xmit=pin_c6, rcv=pin_c7, bits=8, parity=N, stop=1)
+#use RS232(stream=uart, baud=9600, xmit=pin_c6, rcv=pin_c7, bits=8, parity=N, stop=1)// falta documentar
 #use fast_io(B)
 #use fast_io(C)
 #use fast_io(D)
 
-int anchoValor_1=0, anchoValor_2=0;// 
+
 char valor_1[10];
 char valor_2[10];
 
-bool analizaNumero1(char vector[], int anchoValor);
-void analizaNumero2();
+bool analizaNumero(char vector[], int anchoValor);
+int convertirAEntero(char vector[], int anchoValor);
+void rutinaErrorLed();
+//void cleanVector(char vector[], int anchoValor);
+
 
 void main(void){
    set_tris_a(0xC0);
@@ -25,16 +28,15 @@ void main(void){
    setup_oscillator(OSC_16MHZ);
    printf("Hola Mundo\n\t");
    char value, operacion;
-   int empiezaTrama=0, finalizaTrama, recibiTrama;
-   bool validarNumero_1=true;
-   //bool validarNumero_2=true;
+   int anchoValor_1=0, anchoValor_2=0;
+   int empiezaTrama=0, finalizaTrama, recibiTrama, numero_1;
    //int16 resultado;
    while(true){
       if(kbhit()){
          value=getch();
          printf("\n entro");
          if(value=='>'){
-            printf("\t entro al if");
+            printf("\n entro al if");
             empiezaTrama=1;
          }
          if((value!='>')&&(value!=',')&&(empiezaTrama==1)){
@@ -76,11 +78,13 @@ void main(void){
             if(recibiTrama==1){
                printf("La trama esta completa \n");
                recibiTrama=0;
-               validarNumero_1 = analizaNumero1(valor_1, anchoValor_1);
-               if(validarNumero_1==true){
+               if(analizaNumero(valor_1, anchoValor_1) && analizaNumero(valor_2, anchoValor_2)){
                   printf("¡Si son!");
-                /*numero_1 = convertirAEntero(valor_1[]);
-                  numero_2 = convertirAEntero(valor_2[]);
+                  numero_1 = convertirAEntero(valor_1, anchoValor_1);
+                  anchoValor_1=0;
+                  anchoValor_2=0;
+                  printf("%d\n"numero_1);
+                  /*numero_2 = convertirAEntero(valor_2[]);
                   if((numerosDentroDelRango(numero_1)==true)&&(numerosDentroDelRango(numero_2)==true)){
                    //switch (operacion){
                       /*case '+':
@@ -119,10 +123,11 @@ void main(void){
                   }*/
                }else{
                   printf("¡La trama es incorrecta! favor de solo ingresar numeros");
-                  //rutinaErrorLed();
+                  rutinaErrorLed();
                }
             }else{
                printf("¡La trama es incompleta!");
+               rutinaErrorLed();
             }
          }
       }
@@ -131,25 +136,47 @@ void main(void){
       //output_b(resultado);
       //output_d(resultado>>8);
    } 
+   //cleanVector(valor_1, anchoValor_1);
+   //cleanVector(valor_2, anchoValor_2);
 }
 
-bool analizaNumero1(char vector[], int anchoValor){
-   for(int i=0;i<=anchoValor;i++){
-      while((vector[i]<='0') && (vector[i]>='9')){
-         return false;
-      }
-   }return true;
+bool analizaNumero(char vector[], int anchoValor){
+
+   bool valor=true;
+   for(int i=0;i<anchoValor;i++){
+       if(vector[i]<'0' || vector[i]>'9')
+         valor=false;   
+   }
+   return valor;
 }
-/*bool analizaNumero1(char vector[], int anchoValor){
-   for(int i=0;i<=anchoValor;i++){
-      if((vector[i]>='0') && (vector[i]<='9')){
-         return true;
-      }
-   }return false;
+
+/*int convertirAEntero(char vector[], int anchoValor){
+   int numero;
+   for(int i=0;i>=anchoValor;i++){
+   numero = (vector[i] - 48);
+   }
+   return numero;
 }
-  /*  bool numerosDentroDelRango(int numeroEntero){
+
+ /* bool numerosDentroDelRango(int numeroEntero){
          if((numeroEntero>=0)&&(numeroEntero<=255)){
             return true;
             }
             return false;
       }*/
+
+void rutinaErrorLed(){
+   int16 contador=1;
+   for(int i=1;i=16;i++){
+      output_b(contador);
+      output_d(contador>>8);
+      delay_ms(250);
+      contador = contador*2;
+   }
+}
+
+/*void cleanVector(char vector[], int anchoValor){
+   for(int i=0;i<anchoValor;i++){
+      vector[i]=" ";
+   }
+}*/
