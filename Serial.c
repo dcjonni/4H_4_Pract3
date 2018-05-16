@@ -11,10 +11,10 @@
 #use RS232(stream=uart, baud=9600, xmit=pin_c6, rcv=pin_c7, bits=8, parity=N, stop=1)// falta documentar
 
 
-bool analizaNumero(char vector[], int anchoValor);
-int16 convertirAEntero(char vector[]);
+bool analizaNumero(char trama[], int anchoTrama);
+int16 convertirAEntero(char trama[]);
 bool numerosDentroDelRango(int16 numeroEntero);
-void limpiarVector(char vector[], int anchoValor);
+void limpiarTrama(char trama[], int anchoTrama);
 void rutinaErrorLed();
 
 
@@ -27,9 +27,9 @@ void main(void){
    setup_oscillator(OSC_16MHZ);
    printf("Favor de ingresar los dos numeros y selecionar operacion '+' '-' '*' '/' \n\r");
    char value, operacion;
-   char valor_1[10];
-   char valor_2[10];
-   int anchoValor_1=0, anchoValor_2=0;
+   char tramaPrimerNumero[10];
+   char tramaSegundoNumero[10];
+   int anchoTramaPrimerNumero=0, anchoTramaSegundoNumero=0;
    int empiezaTrama=0, finalizaTrama, recibiTrama;
    unsigned int16 numero_1=0, numero_2=0;
    int32 resultado;
@@ -40,15 +40,15 @@ void main(void){
             empiezaTrama=1;
          }
          if((value!='>')&&(value!=',')&&(empiezaTrama==1)){
-            valor_1[anchoValor_1]=value;
-            anchoValor_1++;
+            tramaPrimerNumero[anchoTramaPrimerNumero]=value;
+            anchoTramaPrimerNumero++;
          }
          if((value==',')&&(empiezaTrama!=2)){
             empiezaTrama=2;
          }
          if((empiezaTrama==2)&&(value!='>')&&(value!=',')){
-            valor_2[anchoValor_2]=value;
-            anchoValor_2++;
+            tramaSegundoNumero[anchoTramaSegundoNumero]=value;
+            anchoTramaSegundoNumero++;
             finalizaTrama=1;
          }
          if((finalizaTrama==1)&&(value==',')){
@@ -62,18 +62,18 @@ void main(void){
             finalizaTrama=0;
             if(recibiTrama==1){
                recibiTrama=0;
-               if(analizaNumero(valor_1, anchoValor_1) && analizaNumero(valor_2, anchoValor_2)){
-                  numero_1 = convertirAEntero(valor_1);
-                  numero_2 = convertirAEntero(valor_2);
-                  limpiarVector(valor_1, anchoValor_1);
-                  limpiarVector(valor_2, anchoValor_2);
-                  anchoValor_1 =0;
-                  anchoValor_2 =0;
+               if(analizaNumero(tramaPrimerNumero, anchoTramaPrimerNumero) && analizaNumero(tramaSegundoNumero, anchoTramaSegundoNumero)){
+                  numero_1 = convertirAEntero(tramaPrimerNumero);
+                  numero_2 = convertirAEntero(tramaSegundoNumero);
+                  limpiarTrama(tramaPrimerNumero, anchoTramaPrimerNumero);
+                  limpiarTrama(tramaSegundoNumero, anchoTramaSegundoNumero);
+                  anchoTramaPrimerNumero=0;
+                  anchoTramaSegundoNumero=0;
                   if(numerosDentroDelRango(numero_1) && numerosDentroDelRango(numero_2)){
                      switch (operacion){
                         case '+':
                            resultado=numero_1 + numero_2;
-                           printf("\n\rresultado %Ld \n\r",resultado);
+                           printf("\n\rEl resultado es: %Ld \n\r",resultado);
                            output_b(resultado);
                            output_d(resultado>>8);
                            operacion=0;
@@ -82,7 +82,7 @@ void main(void){
                         break;
                         case '-':
                            resultado=numero_1 - numero_2;
-                           printf("\n\rresultado %Ld \n\r",resultado);
+                           printf("\n\rEl resultado es: %Ld \n\r",resultado);
                            output_b(resultado);
                            output_d(resultado>>8);
                            operacion=0;
@@ -91,7 +91,7 @@ void main(void){
                         break;
                         case '*':
                            resultado=numero_1 * numero_2;
-                           printf("\n\rresultado %Ld \n\r",resultado);
+                           printf("\n\rEl resultado es: %Ld \n\r",resultado);
                            output_b(resultado);
                            output_d(resultado>>8);
                            operacion=0;
@@ -101,12 +101,12 @@ void main(void){
                         case '/':
                            if(numero_2!=0){
                               resultado=numero_1 / numero_2;
-                              printf("\n\rresultado %Ld \n\r",resultado);
+                              printf("\n\rEl resultado es: %Ld \n\r",resultado);
                               output_b(resultado);
                               output_d(resultado>>8);
                            }else{
-                              printf("\n\r¡ERROR!");
-                              rutinaErrorLed();
+                              printf("\n\r¡ERROR! en division\n\r");
+                              //rutinaErrorLed();
                            }
                            operacion=0;
                            numero_1=0;
@@ -114,48 +114,48 @@ void main(void){
                         break;
                      }
                   }else{
-                     printf("\n\r¡La trama es incorrecta! favor de ingresar valores entre 0 y 255 \n\r");
-                     rutinaErrorLed();
-                     limpiarVector(valor_1, anchoValor_1);
-                     limpiarVector(valor_2, anchoValor_2);
-                     anchoValor_1=0;
-                     anchoValor_2=0;
+                     printf("\n\r¡La trama es incorrecta! favor de ingresar valores entre 0 y 255\n\r");
+                     //rutinaErrorLed();
+                     limpiarTrama(tramaPrimerNumero, anchoTramaPrimerNumero);
+                     limpiarTrama(tramaSegundoNumero, anchoTramaSegundoNumero);
+                     anchoTramaPrimerNumero=0;
+                     anchoTramaSegundoNumero=0;
                   }
                }else{
-                  printf("\n\r¡La trama es incorrecta! favor de solo ingresar numeros \n\r");
-                  rutinaErrorLed();
-                  limpiarVector(valor_1, anchoValor_1);
-                  limpiarVector(valor_2, anchoValor_2);
-                  anchoValor_1=0;
-                  anchoValor_2=0;
+                  printf("\n\r¡La trama es incorrecta! favor de solo ingresar numeros\n\r");
+                  //rutinaErrorLed();
+                  limpiarTrama(tramaPrimerNumero, anchoTramaPrimerNumero);
+                  limpiarTrama(tramaSegundoNumero, anchoTramaSegundoNumero);
+                  anchoTramaPrimerNumero=0;
+                  anchoTramaSegundoNumero=0;
                }
             }else{
-               printf("\n\r¡La trama es incompleta! \n\r");
-               rutinaErrorLed();
-               limpiarVector(valor_1, anchoValor_1);
-               limpiarVector(valor_2, anchoValor_2);
-               anchoValor_1=0;
-               anchoValor_2=0;
+               printf("\n\r¡La trama es incompleta!\n\r");
+               //rutinaErrorLed();
+               limpiarTrama(tramaPrimerNumero, anchoTramaPrimerNumero);
+               limpiarTrama(tramaSegundoNumero, anchoTramaSegundoNumero);
+               anchoTramaPrimerNumero=0;
+               anchoTramaSegundoNumero=0;
             }
          }
       }
    } 
 }
 
-bool analizaNumero(char vector[], int anchoValor){
+bool analizaNumero(char trama[], int anchoTrama){
 
    bool valor=true;
-   for(int i=0;i<anchoValor;i++){
-       if(vector[i]<'0' || vector[i]>'9')
+   for(int i=0;i<anchoTrama;i++){
+       if(trama[i]<'0' || trama[i]>'9')
          valor=false;   
    }
    return valor;
 }
 
-int16 convertirAEntero(char vector[]){
+int16 convertirAEntero(char trama[]){
    
    int16 numeroEntero= 0;
-   numeroEntero = atol(vector);
+   numeroEntero = atol(trama);
    return numeroEntero;
 }
 
@@ -179,8 +179,8 @@ void rutinaErrorLed(){
    return;
 }
 
-void limpiarVector(char vector[], int anchoValor){
+void limpiarTrama(char trama[], int anchoTrama){
    
-   memset(vector, '\0', anchoValor);
+   memset(trama, '\0', anchoTrama);
    return;
 }
